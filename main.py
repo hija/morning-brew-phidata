@@ -63,5 +63,5 @@ content = content.replace("'", "\\'").replace("\n", "\\n")
 
 parseed_template = template.format(content=content)
 
-with open("news.html", "w") as f:
+with open("public/news.html", "w") as f:
     f.write(parseed_template)
