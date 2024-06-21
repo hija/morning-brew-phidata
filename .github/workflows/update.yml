@@ -23,6 +23,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run script to generate news.html
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python main.py
 
       - name: Deploy to GitHub Pages
