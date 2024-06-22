@@ -14,18 +14,21 @@ REGION_NORDRHEIN_WESTFALEN = 10
 
 
 def extract_relevant_news(newsElement):
-    return {
-        "title": newsElement["title"],
-        "content": "\n".join(
-            [
-                content_element["value"]
-                for content_element in newsElement["content"]
-                if content_element["type"] == "text"
-            ]
-        ),
-        "breakingNews": newsElement["breakingNews"],
-        "link": newsElement["detailsweb"],
-    }
+    try:
+        return {
+            "title": newsElement["title"],
+            "content": "\n".join(
+                [
+                    content_element["value"]
+                    for content_element in newsElement["content"]
+                    if content_element["type"] == "text"
+                ]
+            ),
+            "breakingNews": newsElement["breakingNews"],
+            "link": newsElement["detailsweb"],
+        }
+    except:
+        return {}
 
 
 def get_latest_news() -> str:
