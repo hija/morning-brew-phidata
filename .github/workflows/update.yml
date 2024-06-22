@@ -2,7 +2,7 @@ name: Daily News Update
 
 on:
   schedule:
-    - cron: '0 10 * * *' # Runs the job every day at 10am
+    - cron: '2 6-22 * * *' # Runs the job every day at 10am
   workflow_dispatch:
 
 jobs:
