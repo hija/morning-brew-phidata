@@ -41,7 +41,8 @@ template = """
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Marked in the browser</title>
+  <title>Nachrichtenzusammenfassung Deutschland</title>
+  <meta name="robots" content="noindex">
 </head>
 <body>
   <div id="content"></div>
