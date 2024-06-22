@@ -50,6 +50,8 @@ template = """
     document.getElementById('content').innerHTML =
       marked.parse('{content}');
   </script>
+  
+  <h6><i>Diese Nachrichten wurden AI generiert, indem Nachrichten der <a href="https://www.tagesschau.de/">Tagesschau</a> zusammengefasst worden sind. Diese Website wird nicht redaktionell gerpüft oder die Zusammenfassungen anderweitig verifiziert! Alle Angaben ohne Gewähr. Für die Inhalte kann keine Haftung übernommen werden.</i></h6>
 </body>
 </html>
 """
@@ -63,5 +65,5 @@ content = content.replace("'", "\\'").replace("\n", "\\n")
 
 parseed_template = template.format(content=content)
 
-with open("public/news.html", "w") as f:
+with open("public/index.html", "w") as f:
     f.write(parseed_template)
