@@ -2,8 +2,30 @@ import json
 import httpx
 import dotenv
 from phi.assistant import Assistant
+from phi.llm.openai import OpenAIChat
+import os
+import traceback
 
 dotenv.load_dotenv(".env")
+
+REGION_BADEN_WUERTTEMBERG = 1
+REGION_NIEDERSACHSEN = 9
+REGION_NORDRHEIN_WESTFALEN = 10
+
+
+def extract_relevant_news(newsElement):
+    return {
+        "title": newsElement["title"],
+        "content": "\n".join(
+            [
+                content_element["value"]
+                for content_element in newsElement["content"]
+                if content_element["type"] == "text"
+            ]
+        ),
+        "breakingNews": newsElement["breakingNews"],
+        "link": newsElement["detailsweb"],
+    }
 
 
 def get_latest_news() -> str:
@@ -15,26 +37,31 @@ def get_latest_news() -> str:
     response = httpx.get("https://www.tagesschau.de/api2u/homepage")
     tagesschau_news = response.json()
 
-    all_news = []
+    breaking_news = []
+    non_breaking_news = []
+
+    for news in tagesschau_news["regional"]:
+        if news["regionId"] in [
+            REGION_BADEN_WUERTTEMBERG,
+            REGION_NIEDERSACHSEN,
+            REGION_NORDRHEIN_WESTFALEN,
+        ]:
+            if news["breakingNews"]:
+                breaking_news.append(extract_relevant_news(news))
+            else:
+                non_breaking_news.append(extract_relevant_news(news))
+
     for news in tagesschau_news["news"]:
-        news_extracted = {
-            "tags": [tag["tag"] for tag in news["tags"]],
-            "title": news["title"],
-            "content": "\n".join(
-                [
-                    content_element["value"]
-                    for content_element in news["content"]
-                    if content_element["type"] == "text"
-                ]
-            ),
-            "breakingNews": news["breakingNews"],
-            "link": news["detailsweb"],
-        }
-        all_news.append(news_extracted)
-    return json.dumps(all_news)
+        if news["breakingNews"]:
+            breaking_news.append(extract_relevant_news(news))
+        else:
+            non_breaking_news.append(extract_relevant_news(news))
 
+    all_news = breaking_news + non_breaking_news
+    while len(jsonToDump := json.dumps(all_news)) > 30000:
+        all_news = all_news[:-1]
+    return jsonToDump
 
-assistant = Assistant(tools=[get_latest_news], show_tool_calls=False)
 
 template = """
 <!doctype html>
@@ -57,10 +84,21 @@ template = """
 </html>
 """
 
-content = assistant.run(
-    "What are the news in Germany? Give the most relevant news first (e.g. which are breaking or topics which are covered by multiple news). Summarize the topic with 4-10 sentences. For each topic also give one link.",
-    stream=False,
-)
+try:
+    assistant = Assistant(
+        llm=OpenAIChat(model="gpt-3.5-turbo-0125"),
+        tools=[get_latest_news],
+        show_tool_calls=False,
+        debug_mode="GITHUB_ACTIONS" not in os.environ,
+    )
+    content = assistant.run(
+        "Was sind die Nachrichten in Deutschland? Geben Sie die relevantesten Nachrichten zuerst (z. B. welche gerade passieren oder Themen, die von mehreren Nachrichtenquellen abgedeckt werden). Fassen Sie das Thema mit 4-10 Sätzen zusammen. Geben Sie für jedes Thema auch einen Link an.",
+        stream=False,
+    )
+except:
+    content = "** Error while running the assistant. **"
+    if "GITHUB_ACTIONS" not in os.environ:
+        traceback.print_exc()
 
 content = content.replace("'", "\\'").replace("\n", "\\n")
 
